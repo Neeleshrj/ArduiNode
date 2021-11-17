@@ -2,27 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { PermissionsAndroid } from 'react-native';
 import ScanDevices from './src/screens/ScanDevices/index';
 
-import BleManagerProvider from './src/Provider/blemanagerprovider';
 export default function App() {
-
-  async function askPermissions(){
-    try{
-      
-      if(granted === PermissionsAndroid.RESULTS.GRANTED){
-        console.log("Location access granted")
-      }else{
-        console.log("Location access denied")
-      }
-    }catch(err){
-      console.warn(err)
-    }
+  const [device, setDevice] = useState(undefined);
+  
+  function selectDevice(device){
+    console.log('App::selectDevice() called with: ', device)
+    setDevice(device)
   }
 
   async function checkPermissions(){
     try{
-      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION)
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
       .then(res => {
-        
         if(res){
           console.log("Permission access granted")
           console.log(res)
@@ -30,7 +21,7 @@ export default function App() {
           console.log("Permission not granted!")
           console.log(res)
           PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
             {
               title: "Need Location Access",
             message:
@@ -53,8 +44,6 @@ export default function App() {
   },[])
 
   return (
-    <BleManagerProvider>
-      <ScanDevices />
-    </BleManagerProvider>
+      <ScanDevices selectDevice={() => selectDevice()}/>
   );
 }
