@@ -44,6 +44,6 @@ export default function App() {
   },[])
 
   return (
-      <ScanDevices selectDevice={() => selectDevice()}/>
+      <ScanDevices selectDevice={selectDevice} device={device}/>
   );
 }

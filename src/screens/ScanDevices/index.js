@@ -8,17 +8,19 @@ import {
   FlatList,
   ActivityIndicator,
   Button,
+  Platform
 } from 'react-native';
 
-import RNBluetoothClassic from 'react-native-bluetooth-classic';
+import RNBluetoothClassic from "react-native-bluetooth-classic";
 
 import DeviceCard from '../../components/DeviceCard/index';
 
-export default function ScanDevices({selectDevice}) {
+export default function ScanDevices({selectDevice, device}) {
   const [scannedDevices, setScannedDevices] = useState([]);
   const [discovering, setDiscovering] = useState(false);
-  const [accepting, setAccepting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [rowItem, selectRowItem] = useState('');
 
   //scan devices
   async function scanDevices() {
@@ -59,51 +61,75 @@ export default function ScanDevices({selectDevice}) {
     }
   }
 
-  //accepting connections
-  async function acceptConnections() {
-    console.log('accepting..');
-    if (accepting) {
-      ToastAndroid.show({
-        text: 'Already accepting connections',
-        duration: 5000,
-      });
+  //initalize read
+  // async function initalizeRead(){
+  //   disconnectSubscription = RNBluetoothClassic.onDeviceDisconnected(() => disconnect());
 
-      return;
-    }
-    setAccepting(true);
+  //   if(polling){
+  //     readInterval = setInterval(() => performRead(), 5000);
+  //   }else{
+  //     readSubscription = device.onDataReceived(data => onReceivedData(data))
+      
+  //   }
+  // }
 
+
+  //connect to device
+  async function connect() {
     try {
-      let device = await RNBluetoothClassic.accept({delimiter: '\r'});
-      if (device) {
-        selectDevice(device);
+      setConnecting(true);
+      let connection = await RNBluetoothClassic.isDeviceConnected(device.address);
+      console.log(connection)
+      if (!connection) {
+        console.log('connecting....');
+
+        console.log(`Attemping connection with ${device.name}`)
+        
+        try{
+          // connection = await device.connect()
+          connection = await RNBluetoothClassic.connectToDevice(device.address,{
+            CONNECTOR_TYPE: "rfcomm",
+            DELIMITER: "\n",
+            DEVICE_CHARSET: Platform.OS === "ios" ? 1536 : "utf-8",
+         })
+          console.log(connection)
+          
+          console.log('connection successful')
+          setIsConnected(connection);
+          setConnecting(false);
+          initalizeRead();
+        }catch(e){
+          console.log(e);
+          
+          console.log('connection failed')
+          setConnecting(false);
+        }
+      }else{
+        
+        console.log('connected to device')
       }
-    } catch (error) {
-      // If we're not in an accepting state, then chances are we actually
-      // requested the cancellation.  This could be managed on the native
-      // side but for now this gives more options.
-      if (!accepting) {
-        ToastAndroid.show({
-          text: 'Attempt to accept connection failed.',
-          duration: 5000,
-        });
-      }
-    } finally {
-      setAccepting(false);
+      
+    } catch (e) {
+      console.warn(e)
+      setConnecting(false);
     }
   }
 
-  //cancel connection
-  async function cancelAcceptConnections() {
-    if (accepting) {
-      return;
-    }
-
+  //disconnect
+  async function disconnect(disconnected) {
     try {
-      let cancelled = await RNBluetoothClassic.cancelAccept();
-      setAccepting(!cancelled);
-    } catch (error) {
+      if (!disconnected) {
+        disconnected = await device.disconnect();
+      }
       ToastAndroid.show({
-        text: 'Unable to cancel accept connection',
+        text: 'Disconnected!',
+        duration: 2000,
+      });
+
+      setIsConnected(!disconnected);
+    } catch (err) {
+      ToastAndroid.show({
+        text: `Error! ${err}`,
         duration: 2000,
       });
     }
@@ -128,26 +154,42 @@ export default function ScanDevices({selectDevice}) {
           data={scannedDevices}
           renderItem={({item}) => (
             <TouchableOpacity
-              onPress={() => selectDevice(item)}
-              
-            >
-              <View style={[styles.deviceDetailsContainer, ]}>
+              onLongPress={() => {
+                selectDevice(item);
+                selectRowItem(item.id);
+              }}
+              onPress={() => {
+                selectDevice(undefined);
+                selectRowItem('');
+              }}>
+              <View
+                style={[
+                  styles.deviceDetailsContainer,
+                  item.id === rowItem
+                    ? {backgroundColor: '#55efc4'}
+                    : {backgroundColor: '#fff'},
+                ]}>
                 <View>
                   <Text>{`Id : ${item.id}`}</Text>
                   <Text>{`Name : ${item.name}`}</Text>
                   <Text>{`Is connected : ${isConnected}`}</Text>
                   <Text>{`Bonded : ${item.bonded}`}</Text>
                 </View>
-                <View style={styles.connectButton}>
-                  <Button
-                    title={accepting ? 'Accepting..' : 'Accept'}
-                    onPress={
-                      accepting
-                        ? () => cancelAcceptConnections()
-                        : () => acceptConnections()
-                    }
-                  />
-                </View>
+                {item.id === rowItem ? (
+                  <View style={styles.connectButton}>
+                    {isConnected ? (
+                      <Button
+                        title={'Disconnect'}
+                        onPress={() => disconnect()}
+                      />
+                    ) : (
+                      <Button
+                        title={connecting ? 'Connecting...' : 'Connect'}
+                        onPress={() => connect()}
+                      />
+                    )}
+                  </View>
+                ) : null}
               </View>
             </TouchableOpacity>
           )}
@@ -187,6 +229,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     marginVertical: '2%',
+    elevation: 10,
   },
   connectButton: {
     width: '40%',
