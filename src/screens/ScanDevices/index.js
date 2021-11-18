@@ -61,19 +61,6 @@ export default function ScanDevices({selectDevice, device}) {
     }
   }
 
-  //initalize read
-  // async function initalizeRead(){
-  //   disconnectSubscription = RNBluetoothClassic.onDeviceDisconnected(() => disconnect());
-
-  //   if(polling){
-  //     readInterval = setInterval(() => performRead(), 5000);
-  //   }else{
-  //     readSubscription = device.onDataReceived(data => onReceivedData(data))
-      
-  //   }
-  // }
-
-
   //connect to device
   async function connect() {
     try {
@@ -95,13 +82,11 @@ export default function ScanDevices({selectDevice, device}) {
           console.log(connection)
           
           console.log('connection successful')
-          setIsConnected(connection);
+          setIsConnected(true);
           setConnecting(false);
-          initalizeRead();
+          // initalizeRead();
         }catch(e){
           console.log(e);
-          
-          console.log('connection failed')
           setConnecting(false);
         }
       }else{
@@ -121,17 +106,13 @@ export default function ScanDevices({selectDevice, device}) {
       if (!disconnected) {
         disconnected = await device.disconnect();
       }
-      ToastAndroid.show({
-        text: 'Disconnected!',
-        duration: 2000,
-      });
+      
+      console.log('Disconnected!')
 
       setIsConnected(!disconnected);
     } catch (err) {
-      ToastAndroid.show({
-        text: `Error! ${err}`,
-        duration: 2000,
-      });
+      
+      console.log('Error!')
     }
   }
 
