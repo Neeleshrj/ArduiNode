@@ -8,10 +8,13 @@ import {
   FlatList,
   ActivityIndicator,
   Button,
-  Platform
+  Platform,
 } from 'react-native';
 
-import RNBluetoothClassic from "react-native-bluetooth-classic";
+import RNBluetoothClassic, {
+  BluetoothDevice,
+  BluetoothEventType,
+} from 'react-native-bluetooth-classic';
 
 import DeviceCard from '../../components/DeviceCard/index';
 
@@ -61,41 +64,60 @@ export default function ScanDevices({selectDevice, device}) {
     }
   }
 
+  //initalize Read
+  async function initalizeWrite() {
+    try {
+      console.log('inside write');
+      let message = 'O';
+      let sentMsg = await RNBluetoothClassic.writeToDevice(
+        device.address,
+        message,
+      );
+
+      console.log('Sent?', sentMsg);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
   //connect to device
   async function connect() {
     try {
       setConnecting(true);
-      let connection = await RNBluetoothClassic.isDeviceConnected(device.address);
-      console.log(connection)
+      let connection = await RNBluetoothClassic.isDeviceConnected(
+        device.address,
+      );
+      console.log(connection);
       if (!connection) {
         console.log('connecting....');
 
-        console.log(`Attemping connection with ${device.name}`)
-        
-        try{
+        console.log(`Attemping connection with ${device.name}`);
+
+        try {
           // connection = await device.connect()
-          connection = await RNBluetoothClassic.connectToDevice(device.address,{
-            CONNECTOR_TYPE: "rfcomm",
-            DELIMITER: "\n",
-            DEVICE_CHARSET: Platform.OS === "ios" ? 1536 : "utf-8",
-         })
-          console.log(connection)
-          
-          console.log('connection successful')
+          connection = await RNBluetoothClassic.connectToDevice(
+            device.address,
+            {
+              CONNECTOR_TYPE: 'rfcomm',
+              DELIMITER: '\n',
+              DEVICE_CHARSET: Platform.OS === 'ios' ? 1536 : 'utf-8',
+            },
+          );
+          console.log(connection);
+
+          console.log('connection successful');
           setIsConnected(true);
           setConnecting(false);
-          // initalizeRead();
-        }catch(e){
+          initalizeWrite();
+        } catch (e) {
           console.log(e);
           setConnecting(false);
         }
-      }else{
-        
-        console.log('connected to device')
+      } else {
+        console.log('connected to device');
       }
-      
     } catch (e) {
-      console.warn(e)
+      console.warn(e);
       setConnecting(false);
     }
   }
@@ -106,13 +128,12 @@ export default function ScanDevices({selectDevice, device}) {
       if (!disconnected) {
         disconnected = await device.disconnect();
       }
-      
-      console.log('Disconnected!')
+
+      console.log('Disconnected!');
 
       setIsConnected(!disconnected);
     } catch (err) {
-      
-      console.log('Error!')
+      console.log('Error!');
     }
   }
 
@@ -159,10 +180,17 @@ export default function ScanDevices({selectDevice, device}) {
                 {item.id === rowItem ? (
                   <View style={styles.connectButton}>
                     {isConnected ? (
-                      <Button
-                        title={'Disconnect'}
-                        onPress={() => disconnect()}
-                      />
+                      <View style={{display: 'flex',flexDirection: 'row',justifyContent: 'space-around'}}>
+                        <Button
+                          title={'Disconnect'}
+                          onPress={() => disconnect()}
+                          color="#55efc4"
+                        />
+                        <Button
+                          title={'Control'}
+                          onPress={() => disconnect()}
+                        />
+                      </View>
                     ) : (
                       <Button
                         title={connecting ? 'Connecting...' : 'Connect'}
@@ -213,7 +241,8 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   connectButton: {
-    width: '40%',
+    width: '100%',
     marginTop: '4%',
+    display: 'flex',
   },
 });
