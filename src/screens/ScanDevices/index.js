@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {
   View,
   Text,
@@ -11,19 +11,19 @@ import {
   Platform,
 } from 'react-native';
 
-import RNBluetoothClassic, {
-  BluetoothDevice,
-  BluetoothEventType,
-} from 'react-native-bluetooth-classic';
+import RNBluetoothClassic from 'react-native-bluetooth-classic';
 
-import DeviceCard from '../../components/DeviceCard/index';
+import {DeviceContext, useSelectDevice, useSetScannedDevice} from '../../Provider/BTContextProivder';
 
-export default function ScanDevices({selectDevice, device}) {
-  const [scannedDevices, setScannedDevices] = useState([]);
+export default function ScanDevices() {
+  // const [scannedDevices, setScannedDevices] = useState([]);
   const [discovering, setDiscovering] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [rowItem, selectRowItem] = useState('');
+
+  const {device, deviceId, scannedDevices} = useContext(DeviceContext);
+  const SelectDevice = useSelectDevice();
+  const SetScannedDevice = useSetScannedDevice();
 
   //scan devices
   async function scanDevices() {
@@ -40,7 +40,7 @@ export default function ScanDevices({selectDevice, device}) {
         );
         console.log(unpaired);
       } finally {
-        setScannedDevices(devices);
+        SetScannedDevice(devices);
         setDiscovering(false);
       }
     } catch (err) {
@@ -61,22 +61,6 @@ export default function ScanDevices({selectDevice, device}) {
         text: 'Error occurred while attempting to cancel discover devices',
         duration: 2000,
       });
-    }
-  }
-
-  //initalize Read
-  async function initalizeWrite() {
-    try {
-      console.log('inside write');
-      let message = 'O';
-      let sentMsg = await RNBluetoothClassic.writeToDevice(
-        device.address,
-        message,
-      );
-
-      console.log('Sent?', sentMsg);
-    } catch (e) {
-      console.warn(e);
     }
   }
 
@@ -108,7 +92,7 @@ export default function ScanDevices({selectDevice, device}) {
           console.log('connection successful');
           setIsConnected(true);
           setConnecting(false);
-          initalizeWrite();
+          // initalizeWrite();
         } catch (e) {
           console.log(e);
           setConnecting(false);
@@ -157,17 +141,15 @@ export default function ScanDevices({selectDevice, device}) {
           renderItem={({item}) => (
             <TouchableOpacity
               onLongPress={() => {
-                selectDevice(item);
-                selectRowItem(item.id);
+                SelectDevice(item);
               }}
               onPress={() => {
-                selectDevice(undefined);
-                selectRowItem('');
+                SelectDevice(undefined);
               }}>
               <View
                 style={[
                   styles.deviceDetailsContainer,
-                  item.id === rowItem
+                  item.id === deviceId
                     ? {backgroundColor: '#55efc4'}
                     : {backgroundColor: '#fff'},
                 ]}>
@@ -177,25 +159,34 @@ export default function ScanDevices({selectDevice, device}) {
                   <Text>{`Is connected : ${isConnected}`}</Text>
                   <Text>{`Bonded : ${item.bonded}`}</Text>
                 </View>
-                {item.id === rowItem ? (
+                {item.id === deviceId ? (
                   <View style={styles.connectButton}>
                     {isConnected ? (
-                      <View style={{display: 'flex',flexDirection: 'row',justifyContent: 'space-around'}}>
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          justifyContent: 'space-around',
+                        }}>
                         <Button
                           title={'Disconnect'}
                           onPress={() => disconnect()}
-                          color="#55efc4"
-                        />
-                        <Button
-                          title={'Control'}
-                          onPress={() => disconnect()}
+                          color="#d63031"
                         />
                       </View>
                     ) : (
-                      <Button
-                        title={connecting ? 'Connecting...' : 'Connect'}
-                        onPress={() => connect()}
-                      />
+                      <View
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          justifyContent: 'space-around',
+                        }}>
+                        <Button
+                          title={connecting ? 'Connecting...' : 'Connect'}
+                          onPress={() => connect()}
+                          color="#2d3436"
+                        />
+                      </View>
                     )}
                   </View>
                 ) : null}
