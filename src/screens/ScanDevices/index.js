@@ -13,17 +13,16 @@ import {
 
 import RNBluetoothClassic from 'react-native-bluetooth-classic';
 
-import {DeviceContext, useSelectDevice, useSetScannedDevice} from '../../Provider/BTContextProivder';
+import {DeviceContext, useSelectDevice, useSetScannedDevice, useOnDeviceConnect} from '../../Provider/BTContextProivder';
 
-export default function ScanDevices() {
-  // const [scannedDevices, setScannedDevices] = useState([]);
+export default function ScanDevices({navigation}) {
   const [discovering, setDiscovering] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
-  const {device, deviceId, scannedDevices} = useContext(DeviceContext);
+  const {device, deviceId, scannedDevices, connectedDevice, isConnected} = useContext(DeviceContext);
   const SelectDevice = useSelectDevice();
   const SetScannedDevice = useSetScannedDevice();
+  const OnDeviceConnect = useOnDeviceConnect();
 
   //scan devices
   async function scanDevices() {
@@ -90,9 +89,10 @@ export default function ScanDevices() {
           console.log(connection);
 
           console.log('connection successful');
-          setIsConnected(true);
+
+          OnDeviceConnect("Connected to "+device.name);
           setConnecting(false);
-          // initalizeWrite();
+          navigation.goBack();
         } catch (e) {
           console.log(e);
           setConnecting(false);
@@ -103,21 +103,6 @@ export default function ScanDevices() {
     } catch (e) {
       console.warn(e);
       setConnecting(false);
-    }
-  }
-
-  //disconnect
-  async function disconnect(disconnected) {
-    try {
-      if (!disconnected) {
-        disconnected = await device.disconnect();
-      }
-
-      console.log('Disconnected!');
-
-      setIsConnected(!disconnected);
-    } catch (err) {
-      console.log('Error!');
     }
   }
 
@@ -150,14 +135,13 @@ export default function ScanDevices() {
                 style={[
                   styles.deviceDetailsContainer,
                   item.id === deviceId
-                    ? {backgroundColor: '#55efc4'}
+                    ? {backgroundColor: '#1dd1a1'}
                     : {backgroundColor: '#fff'},
                 ]}>
                 <View>
-                  <Text>{`Id : ${item.id}`}</Text>
-                  <Text>{`Name : ${item.name}`}</Text>
-                  <Text>{`Is connected : ${isConnected}`}</Text>
-                  <Text>{`Bonded : ${item.bonded}`}</Text>
+                  <Text style={item.id === deviceId ? {color: '#fff'} : {color: '#000'}}>{`Id : ${item.id}`}</Text>
+                  <Text style={item.id === deviceId ? {color: '#fff'} : {color: '#000'}}>{`Name : ${item.name}`}</Text>
+                  <Text style={item.id === deviceId ? {color: '#fff'} : {color: '#000'}}>{`Bonded : ${item.bonded}`}</Text>
                 </View>
                 {item.id === deviceId ? (
                   <View style={styles.connectButton}>
@@ -226,7 +210,6 @@ const styles = StyleSheet.create({
   },
   deviceDetailsContainer: {
     padding: '5%',
-    borderWidth: 1,
     borderRadius: 8,
     marginVertical: '2%',
     elevation: 10,

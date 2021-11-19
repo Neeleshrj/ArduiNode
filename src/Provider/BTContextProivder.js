@@ -3,12 +3,20 @@ import React, {useState, createContext, useContext} from 'react';
 import RNBluetoothClassic from 'react-native-bluetooth-classic';
 
 export const DeviceContext = createContext();
+
 const SelectDeviceContext = createContext();
-const SendDataContext = createContext();
 const SetScannedDeviceContext = createContext();
+const OnDeviceConnectContext = createContext();
+
+const DisconnectDeviceContext = createContext();
+const SendDataContext = createContext();
 
 export function useSelectDevice() {
   return useContext(SelectDeviceContext);
+}
+
+export function useDisconnectDevice() {
+  return useContext(DisconnectDeviceContext);
 }
 
 export function useSendData() {
@@ -19,10 +27,16 @@ export function useSetScannedDevice() {
   return useContext(SetScannedDeviceContext);
 }
 
+export function useOnDeviceConnect() {
+  return useContext(OnDeviceConnectContext);
+}
+
 export default function BTContextProvider({children}) {
   const [device, setDevice] = useState(undefined);
   const [deviceId, setDeviceId] = useState(undefined);
   const [scannedDevices, setScannedDevices] = useState([]);
+  const [connectedDevice, setConnectedDevice] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
 
   function selectDevice(device) {
     console.log('App::selectDevice() called with: ', device);
@@ -31,8 +45,27 @@ export default function BTContextProvider({children}) {
     else setDeviceId(device.id);
   }
 
-  async function SetScannedDevice(devices) {
+  function SetScannedDevice(devices) {
     setScannedDevices(devices);
+  }
+
+  function OnDeviceConnect(connectedDevice) {
+    setConnectedDevice(connectedDevice);
+    setIsConnected(!isConnected);
+  }
+
+  //disconnect device
+  async function disconnectDevice(disconnected) {
+    try {
+      if (!disconnected) {
+        await device.disconnect();
+      }
+      console.log('Disconnected!');
+
+      OnDeviceConnect("");
+    } catch (err) {
+      console.log('Error!');
+    }
   }
 
   //write(send data) to device
@@ -57,12 +90,18 @@ export default function BTContextProvider({children}) {
         device: device,
         deviceId: deviceId,
         scannedDevices: scannedDevices,
+        connectedDevice: connectedDevice,
+        isConnected: isConnected,
       }}>
       <SetScannedDeviceContext.Provider value={SetScannedDevice}>
         <SelectDeviceContext.Provider value={selectDevice}>
-          <SendDataContext.Provider value={writeData}>
-            {children}
-          </SendDataContext.Provider>
+          <OnDeviceConnectContext.Provider value={OnDeviceConnect}>
+            <DisconnectDeviceContext.Provider value={disconnectDevice}>
+              <SendDataContext.Provider value={writeData}>
+                {children}
+              </SendDataContext.Provider>
+            </DisconnectDeviceContext.Provider>
+          </OnDeviceConnectContext.Provider>
         </SelectDeviceContext.Provider>
       </SetScannedDeviceContext.Provider>
     </DeviceContext.Provider>
