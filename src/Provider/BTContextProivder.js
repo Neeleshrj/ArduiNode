@@ -73,12 +73,12 @@ export default function BTContextProvider({children}) {
     try {
       console.log('inside write');
       let message = msg;
-      let sentMsg = await RNBluetoothClassic.writeToDevice(
+      await RNBluetoothClassic.writeToDevice(
         device.address,
         message,
       );
 
-      console.log('Sent?', sentMsg);
+      console.log('Sent?', msg);
     } catch (e) {
       console.warn(e);
     }
