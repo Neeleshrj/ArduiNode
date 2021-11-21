@@ -4,6 +4,9 @@
     ArduiNode is a mobile application used for controlling a Arduino UNO by connecting to a HC-05. It can be used as an IoT control hub to switch on and off devices from your mobile.
 </p>
 <p>
+    Built using Ken Davidson's <a href="https://github.com/kenjdavidson/react-native-bluetooth-classic">React Native Bluetooth Classic</a> library using reference from the sample app provided.
+</p>
+<p>
     <b>Design Inspiration from:</b> 
     <br>
     <a href="https://hardikothari.myportfolio.com/iot-smart-space-app-ui-design-elements">IoT Smart Space App</a>
