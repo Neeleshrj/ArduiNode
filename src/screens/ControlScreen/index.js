@@ -34,8 +34,14 @@ export default function ControlScreen() {
           <Text style={btn1 ? {color: '#fff'} : {color: '#000'}}>Debug</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => SendData('B')}
-          style={styles.buttonContainer}>
+          onPress={() => {
+            SendData('B')
+            setBtn2(!btn2);
+          }}
+          style={[
+            styles.buttonContainer,
+            btn2 ? {backgroundColor: '#1dd1a1'} : {backgroundColor: '#fff'},
+          ]}>
           <Icon name="bulb-outline" size={hp('4')} color={btn2 ? '#fff' : '#000'} />
           <Text style={btn2 ? {color: '#fff'} : {color: '#000'}}>Bulb</Text>
         </TouchableOpacity>

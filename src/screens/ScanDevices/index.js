@@ -43,10 +43,12 @@ export default function ScanDevices({navigation}) {
         setDiscovering(false);
       }
     } catch (err) {
-      ToastAndroid.show({
-        text: err.message,
-        duration: 2000,
-      });
+      setDiscovering(false);
+      console.log(err)
+      // ToastAndroid.show({
+      //   text: err.message,
+      //   duration: 2000,
+      // });
     }
   }
 
@@ -56,10 +58,12 @@ export default function ScanDevices({navigation}) {
       await RNBluetoothClassic.stopDiscovery();
       setDiscovering(false);
     } catch (e) {
-      ToastAndroid.show({
-        text: 'Error occurred while attempting to cancel discover devices',
-        duration: 2000,
-      });
+      setDiscovering(false);
+      console.log(e);
+      // ToastAndroid.show({
+      //   text: 'Error occurred while attempting to cancel discover devices',
+      //   duration: 2000,
+      // });
     }
   }
 
